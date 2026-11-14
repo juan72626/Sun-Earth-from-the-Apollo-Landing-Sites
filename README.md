@@ -20,4 +20,4 @@ npm run build    # tipos + producción (carpeta dist/)
 - `src/components/` – una sección por componente (`GlobeSection`, `PolarMapSection`, `CompareSection`, `ZonesSection`, `RelaySection`, `RecommenderSection`, `CalendarSection`, …).
 
 ## Space Apps
-Recuerda declarar el uso de IA (SI) en el formulario y marcar el código como generado/asistido por IA en la descripción del proyecto.
+Usamos Claude.Ai en el desarrollo con los stack de Typescript + React + HTML5 + CSS 
