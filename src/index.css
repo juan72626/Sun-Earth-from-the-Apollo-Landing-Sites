@@ -1,0 +1,13 @@
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  color-scheme:dark;
+  --bg:#070a12;--pn:#0f1422;--ln:#232b40;--fg:#eef1fb;--mu:#98a2bd;--sun:#ffb83d;--ear:#4aa3ff}
+html{
+  scroll-padding-top:env(safe-area-inset-top,0px)}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--fg);
+  font:15px/1.45 Jost,Futura,"Century Gothic",system-ui,sans-serif}
