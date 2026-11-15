@@ -1,6 +1,9 @@
 import { RAD, el } from '../astro';
 import { ptCol, isCand } from '../classify';
 import { ctx2d } from '../canvas';
+import { dec } from '../format';
+import { UI } from '../../i18n/ui';
+import type { Lang } from '../../i18n/types';
 import type { Ephemeris, Site } from '../../types';
 
 export const POLAR_W = 720;
@@ -60,8 +63,13 @@ const lab = (g: CanvasRenderingContext2D, t: string, x: number, y: number, col?:
 /** Mapa del polo sur visto desde arriba. */
 export function drawPolar(
   canvas: HTMLCanvasElement,
-  { e, mk, S, foc, pts, sites }: { e: Ephemeris; mk: number; S: number; foc: number; pts: PolarPoint[]; sites: Site[] },
+  { e, mk, S, foc, pts, sites, lang = 'es', name = (s) => s.n }: {
+    e: Ephemeris; mk: number; S: number; foc: number; pts: PolarPoint[]; sites: Site[];
+    /** Idioma de las etiquetas dibujadas y función que da el nombre mostrado de cada sitio. */
+    lang?: Lang; name?: (s: Site) => string;
+  },
 ): void {
+  const cv = UI[lang].canvas;
   const g = ctx2d(canvas);
   const W = canvas.width;
   const po = sites[0];
@@ -95,7 +103,7 @@ export function drawPolar(
     g.strokeStyle = '#2a3350';
     g.beginPath(); g.arc(C, C, (R * j) / 5, 0, 7); g.stroke();
     const q = P((R * j) / 5, 45);
-    lab(g, (90 - st * j).toFixed(S < 5 ? 1 : 0).replace('.', ',') + '°S', q[0] + 6, q[1] - 4, '#98a2bd');
+    lab(g, dec((90 - st * j).toFixed(S < 5 ? 1 : 0), lang) + '°S', q[0] + 6, q[1] - 4, '#98a2bd');
   }
 
   if (S > 6) {
@@ -103,16 +111,16 @@ export function drawPolar(
     g.beginPath(); g.arc(C, C, (R * 6) / S, 0, 7); g.stroke();
     g.setLineDash([]);
     const q = P((R * 6) / S, 300);
-    lab(g, 'límite Artemis 6°', q[0], q[1], '#b48cff');
+    lab(g, cv.artemisLimit, q[0], q[1], '#b48cff');
   }
 
-  const meridians: [number, string][] = [[0, '0° (Tierra)'], [90, '90°E'], [180, '180° (lado oculto)'], [270, '90°O']];
+  const meridians: [number, string][] = [[0, cv.meridians[0]], [90, cv.meridians[1]], [180, cv.meridians[2]], [270, cv.meridians[3]]];
   meridians.forEach(([l, n]) => {
     const q = P(R + 30, l);
     lab(g, n, q[0], q[1] + 7, '#98a2bd');
   });
 
-  const bodies: [number, string, string, boolean][] = [[ls, '#ffb83d', 'Sol', su], [le, '#4aa3ff', 'Tierra', eu]];
+  const bodies: [number, string, string, boolean][] = [[ls, '#ffb83d', cv.sun, su], [le, '#4aa3ff', cv.earth, eu]];
   bodies.forEach(([l, col, n, up]) => {
     const lr = l * RAD;
     const q = P(R * 0.82, l), h = P(R * 0.82 + 24, l), u = P(R * 0.82 + 46, l);
@@ -142,9 +150,9 @@ export function drawPolar(
 
   g.font = '20px Jost,sans-serif';
   pts.forEach((p) => {
-    if (p.i === foc) lab(g, sites[p.i].n, Math.max(110, Math.min(W - 110, p.x)), p.y - 30, '#fff');
+    if (p.i === foc) lab(g, name(sites[p.i]), Math.max(110, Math.min(W - 110, p.x)), p.y - 30, '#fff');
   });
-  lab(g, 'Radio ' + S + '° (~' + Math.round(S * 30.32) + ' km)', W - 110, 30, '#98a2bd');
+  lab(g, cv.radius(S, Math.round(S * 30.32)), W - 110, 30, '#98a2bd');
 }
 
 /** Texto bajo el mapa: alturas del Sol y la Tierra en el polo. */

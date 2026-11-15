@@ -2,16 +2,18 @@ import { useEffect, useRef, type PointerEvent as ReactPointerEvent } from 'react
 import { drawTimeline } from '../lib/draw/drawTimeline';
 import { HR } from '../lib/astro';
 import { useSim } from '../hooks/SimContext';
+import { useLang } from '../i18n/LangContext';
 import type { EclipseEvent, Site } from '../types';
 
 /** Gráfica de 30 días con elevaciones, ventanas operativas y eclipses. Se arrastra para cambiar la fecha. */
 export default function TimelineChart({ site, eclipses }: { site: Site; eclipses: EclipseEvent[] | null }) {
   const { t, w0, mk, goTo } = useSim();
+  const { lang } = useLang();
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
-    if (ref.current) drawTimeline(ref.current, site, { t, w0, mk, eclipses });
-  }, [site, t, w0, mk, eclipses]);
+    if (ref.current) drawTimeline(ref.current, site, { t, w0, mk, eclipses }, lang);
+  }, [site, t, w0, mk, eclipses, lang]);
 
   const seek = (ev: ReactPointerEvent<HTMLCanvasElement>): void => {
     const r = ev.currentTarget.getBoundingClientRect();

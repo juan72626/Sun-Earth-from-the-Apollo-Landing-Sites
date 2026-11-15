@@ -1,8 +1,7 @@
 import { el, nextEvent, solarPower } from '../lib/astro';
-import { dur, evText, f1, fd } from '../lib/format';
-import type { EclipseEvent, Ephemeris, Site, SiteStats } from '../types';
-
-const fv = (v: number): string | number => (v < 10 ? f1(v) : Math.round(v));
+import { dur } from '../lib/format';
+import { useI18n } from '../i18n/useI18n';
+import type { EclipseEvent, Ephemeris, NextEvent, Site, SiteStats } from '../types';
 
 /** Encabezado del sitio: badge, cajas de Sol y Tierra, resumen de 30 días, eclipses y potencia solar. */
 interface SiteStatusProps {
@@ -16,6 +15,13 @@ interface SiteStatusProps {
 }
 
 export default function SiteStatus({ site, t, e, mk, st, eclipses }: SiteStatusProps) {
+  const { ui, fmt, siteName } = useI18n();
+  const { f1, fd } = fmt;
+  const S = ui.status;
+  const fv = (v: number): string => (v < 10 ? f1(v) : String(Math.round(v)));
+  const evText = (body: 's' | 'e', o: NextEvent): string =>
+    o.t == null ? S.noEvent(body, o.up) : S.event(body, o.up, dur(o.t));
+
   const xs = el(site, e.s);
   const xe = el(site, e.e);
   const us = xs + 0.27 > mk;
@@ -25,39 +31,46 @@ export default function SiteStatus({ site, t, e, mk, st, eclipses }: SiteStatusP
 
   return (
     <>
-      <h2>{`${site.n} (${f1(site.la)}°, ${f1(site.lo)}°)`}</h2>
+      <h2>{`${siteName(site)} (${f1(site.la)}°, ${f1(site.lo)}°)`}</h2>
       <span className="badge" style={{ background: both ? '#4aa3ff' : us || ue ? '#9fb0d6' : '#7b86a6' }}>
-        {both ? 'Energía y enlace disponibles' : us ? 'Solo energía solar' : ue ? 'Solo enlace con la Tierra' : 'Sin Sol ni Tierra'}
+        {both ? S.badgeBoth : us ? S.badgeSun : ue ? S.badgeEarth : S.badgeNone}
       </span>
 
       <div className="two">
         <div className="box">
-          <span>Sol</span>
+          <span>{S.sun}</span>
           <b>{f1(xs)}°</b>
-          <span>{us ? 'Sobre' : 'Bajo'} el horizonte<br />{evText(nextEvent(site, 's', t, mk), 'del Sol')}</span>
+          <span>{us ? S.above : S.below}<br />{evText('s', nextEvent(site, 's', t, mk))}</span>
         </div>
         <div className="box">
-          <span>Tierra</span>
+          <span>{S.earth}</span>
           <b>{f1(xe)}°</b>
-          <span>{ue ? 'Sobre' : 'Bajo'} el horizonte<br />{evText(nextEvent(site, 'e', t, mk), 'de la Tierra')}</span>
+          <span>{ue ? S.above : S.below}<br />{evText('e', nextEvent(site, 'e', t, mk))}</span>
         </div>
       </div>
 
       <p className="note">
-        {`En los próximos 30 días el Sol llega como máximo a ${f1(st.ms)}° y la Tierra a ${f1(st.me)}°. Ambos están sobre el horizonte el ${Math.round(st.c)} % del tiempo. La noche solar más larga dura ${st.bd ? dur(st.bd * 36e5) : 'menos de 1 h'}. La mayor ventana con Sol y Tierra a la vez dura ${st.bb ? dur(st.bb * 36e5) + ' (desde el ' + fd(st.bs) + ')' : '0 min'}.${st.bb >= 156 ? ' Eso alcanza los 6,5 días que NASA usó como referencia para Artemis III.' : ''}`}
+        {S.summary({
+          ms: f1(st.ms),
+          me: f1(st.me),
+          c: ui.pct(Math.round(st.c)),
+          night: st.bd ? dur(st.bd * 36e5) : null,
+          win: st.bb ? S.windowSince(dur(st.bb * 36e5), fd(st.bs)) : null,
+          ref: st.bb >= 156,
+        })}
       </p>
 
       <p className="note">
         {eclipses === null
-          ? 'Buscando eclipses…'
+          ? S.searching
           : eclipses.length
-            ? 'Eclipses de Sol por la Tierra (la Tierra tapa al Sol), próximos 120 días: ' +
-              eclipses.map((q) => `${fd(q.a)} a ${fd(q.b)} (${dur(q.b - q.a)}, ${q.tot ? 'total' : 'parcial'}${q.up < 0.5 ? ', con el Sol bajo el horizonte' : ''})`).join('; ') + '.'
-            : 'Eclipses de Sol por la Tierra: ninguno en los próximos 120 días.'}
+            ? S.eclipsesHead +
+              eclipses.map((q) => S.eclipseItem(fd(q.a), fd(q.b), dur(q.b - q.a), q.tot, q.up < 0.5)).join('; ') + '.'
+            : S.eclipsesNone}
       </p>
 
       <p className="note">
-        {`Potencia solar relativa (100 % = panel que sigue al Sol, con el Sol arriba): ahora, panel horizontal ${fv(pw.nowH)} % y panel vertical orientable ${fv(pw.nowV)} %; promedio de 30 días, horizontal ${fv(pw.avgH)} % y vertical ${fv(pw.avgV)} %. Con el Sol muy bajo, como en los polos, un panel vertical produce mucho más que uno horizontal.`}
+        {S.power({ nowH: fv(pw.nowH), nowV: fv(pw.nowV), avgH: fv(pw.avgH), avgV: fv(pw.avgV) })}
       </p>
     </>
   );

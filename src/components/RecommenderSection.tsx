@@ -1,9 +1,9 @@
 import { useState, type ChangeEvent } from 'react';
 import { findWindow } from '../lib/astro';
 import { OKS, ptCol, recoFilter } from '../lib/classify';
-import { f1, fd } from '../lib/format';
 import { HR } from '../lib/astro';
 import { useSim } from '../hooks/SimContext';
+import { useI18n } from '../i18n/useI18n';
 import type { LinkMode, Site, SiteLevel, TimeWindow, WindowResult } from '../types';
 
 /** Orden "más seguro primero"; los sitios sin clasificar van al final. */
@@ -27,6 +27,8 @@ interface RecoResult {
 /** Busca los sitios y el primer momento de los próximos 120 días que cumplen lo que se necesita. */
 export default function RecommenderSection() {
   const { sites, t, mk, goTo, openSite } = useSim();
+  const { ui } = useI18n();
+  const R = ui.reco;
   const [days, setDays] = useState('6.5');
   const [link, setLink] = useState<LinkMode>(0);
   const [kind, setKind] = useState(2);
@@ -58,47 +60,38 @@ export default function RecommenderSection() {
 
   return (
     <section id="s5">
-      <h2>Recomendador de sitio y fecha</h2>
-      <p className="note" style={{ margin: '0 0 10px' }}>
-        Dime qué necesitas y te propongo los sitios y el primer momento de los próximos 120 días que lo cumple. Usa la máscara de horizonte actual. Toca un resultado para ir a esa fecha.
-      </p>
+      <h2>{R.title}</h2>
+      <p className="note" style={{ margin: '0 0 10px' }}>{R.intro}</p>
       <div className="row">
         <label>
-          Días seguidos con Sol
+          {R.days}
           <input type="number" min="0.5" max="30" step="0.5" inputMode="decimal" value={days} onChange={(e: ChangeEvent<HTMLInputElement>) => setDays(e.target.value)} />
         </label>
         <label>
-          Enlace con la Tierra
+          {R.link}
           <select value={link} onChange={(e: ChangeEvent<HTMLSelectElement>) => setLink(+e.target.value as LinkMode)}>
-            <option value="0">Tierra directa</option>
-            <option value="1">Tierra directa o relevo L2</option>
-            <option value="2">No necesito enlace</option>
+            {R.linkOptions.map((label, i) => <option key={i} value={i}>{label}</option>)}
           </select>
         </label>
       </div>
       <div className="row">
         <label>
-          Sitios
+          {R.sites}
           <select value={kind} onChange={(e: ChangeEvent<HTMLSelectElement>) => setKind(+e.target.value)}>
-            <option value="2">Verdes y amarillos</option>
-            <option value="1">Solo verdes (seguros)</option>
-            <option value="3">Solo candidatos</option>
-            <option value="0">Todos</option>
+            {['2', '1', '3', '0'].map((v) => <option key={v} value={v}>{R.kindOptions[v]}</option>)}
           </select>
         </label>
         <label>
-          Ordenar por
+          {R.orderBy}
           <select value={orderBy} onChange={(e: ChangeEvent<HTMLSelectElement>) => setOrderBy(+e.target.value)}>
-            <option value="0">Fecha más pronto</option>
-            <option value="1">Ventana más larga</option>
-            <option value="2">Más seguro primero</option>
+            {R.orderOptions.map((label, i) => <option key={i} value={i}>{label}</option>)}
           </select>
         </label>
-        <button onClick={search}>Buscar</button>
+        <button onClick={search}>{R.search}</button>
       </div>
 
       <div>
-        {result === 'busy' && <p className="note">Buscando…</p>}
+        {result === 'busy' && <p className="note">{R.busy}</p>}
         {result && result !== 'busy' && <Results result={result} t={t} onPick={pick} />}
       </div>
     </section>
@@ -106,13 +99,16 @@ export default function RecommenderSection() {
 }
 
 function Results({ result, t, onPick }: { result: RecoResult; t: number; onPick: (r: RecoRow, q: TimeWindow) => void }) {
+  const { ui, fmt, siteName } = useI18n();
+  const { f1, fd } = fmt;
+  const R = ui.reco;
   const { A, B, d, od } = result;
   return (
     <>
       {A.length ? (
         <>
           <p className="note" style={{ margin: '0 0 6px' }}>
-            {A.length} sitios cumplen. El punto de color es la categoría del sitio.
+            {R.found(A.length)}
           </p>
           {A.map((r, k) => {
             const q = od === 1 ? r.w.b : r.w.f;
@@ -120,19 +116,19 @@ function Results({ result, t, onPick }: { result: RecoResult; t: number; onPick:
               <div className="wi" key={r.i} onClick={() => onPick(r, q)}>
                 <b>
                   <i className="dt" style={{ background: ptCol(r.s) }} />
-                  {k === 0 ? 'Recomendado: ' : ''}{r.s.n}
+                  {k === 0 ? R.recommended : ''}{siteName(r.s)}
                 </b>
-                <span>{q.s <= t + HR ? 'ahora' : fd(q.s)}</span>
-                <span>{f1(q.d / 24)} d</span>
+                <span>{q.s <= t + HR ? R.nowLabel : fd(q.s)}</span>
+                <span>{R.daysShort(f1(q.d / 24))}</span>
               </div>
             );
           })}
         </>
       ) : (
-        <p className="note">Ningún sitio cumple eso en los próximos 120 días. Prueba con menos días, con relevo L2 o con más tipos de sitio.</p>
+        <p className="note">{R.none}</p>
       )}
       {A.length > 0 && B.length > 0 && (
-        <p className="note">Sin ventana de {f1(d)} d en 120 días: {B.map((r) => r.s.n).join(', ')}.</p>
+        <p className="note">{R.withoutWindow(f1(d), B.map((r) => siteName(r.s)).join(', '))}</p>
       )}
     </>
   );

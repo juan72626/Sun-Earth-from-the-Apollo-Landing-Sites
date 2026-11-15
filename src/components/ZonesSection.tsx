@@ -1,9 +1,11 @@
 import { useEffect, useRef } from 'react';
 import { zoneScene } from '../lib/draw/drawZones';
-import { LROC_LINKS, ZONE_BAD, ZONE_OK } from '../data/content';
+import { useI18n } from '../i18n/useI18n';
 
 /** Dibujo animado de una zona apta y una peligrosa, con sus criterios. */
 export default function ZonesSection() {
+  const { ui, data, lang } = useI18n();
+  const { LROC_LINKS, ZONE_BAD, ZONE_OK } = data;
   const okRef = useRef<HTMLCanvasElement>(null);
   const badRef = useRef<HTMLCanvasElement>(null);
 
@@ -15,37 +17,33 @@ export default function ZonesSection() {
       if (ts - last < 34) return;
       last = ts;
       const ph = ((ts / 1000) % 7) / 7;
-      if (okRef.current) zoneScene(okRef.current, false, ph);
-      if (badRef.current) zoneScene(badRef.current, true, ph);
+      if (okRef.current) zoneScene(okRef.current, false, ph, lang);
+      if (badRef.current) zoneScene(badRef.current, true, ph, lang);
     };
     id = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(id);
-  }, []);
+  }, [lang]);
 
   return (
     <section id="s8">
-      <h2>Cómo se ve una zona segura y una peligrosa</h2>
-      <p className="note" style={{ margin: '0 0 10px' }}>
-        Dibujo animado y esquemático: arriba baja un módulo a una zona apta; abajo, a una peligrosa.
-      </p>
+      <h2>{ui.zones.title}</h2>
+      <p className="note" style={{ margin: '0 0 10px' }}>{ui.zones.intro}</p>
 
       <canvas ref={okRef} id="za" width="720" height="360" />
-      <h3 className="zh" style={{ color: '#34d65a' }}>Zona donde sí se puede aterrizar (verde)</h3>
+      <h3 className="zh" style={{ color: '#34d65a' }}>{ui.zones.okTitle}</h3>
       <ul className="cx">{ZONE_OK.map((t) => <li key={t}>{t}</li>)}</ul>
 
       <canvas ref={badRef} id="zb" width="720" height="360" />
-      <h3 className="zh" style={{ color: '#ff4d4d' }}>Zona donde no se puede aterrizar (rojo)</h3>
+      <h3 className="zh" style={{ color: '#ff4d4d' }}>{ui.zones.badTitle}</h3>
       <ul className="cx">{ZONE_BAD.map((t) => <li key={t}>{t}</li>)}</ul>
 
+      <p className="note">{ui.zones.legend}</p>
       <p className="note">
-        Amarillo (precaución): se puede aterrizar, pero con riesgos conocidos, como rocas, pendientes moderadas, luz baja o dependencia de un relevo. Morado (candidato): lugar propuesto que aún no tiene un aterrizaje probado; su riesgo estimado está en la ficha.
-      </p>
-      <p className="note">
-        Fotos reales de LROC (NASA):{' '}
+        {ui.zones.photos}{' '}
         {LROC_LINKS.map(([href, label], i) => (
           <span key={href}>
             <a href={href} target="_blank" rel="noopener noreferrer">{label}</a>
-            {i < LROC_LINKS.length - 2 ? ', ' : i === LROC_LINKS.length - 2 ? ' y ' : '.'}
+            {i < LROC_LINKS.length - 2 ? ', ' : i === LROC_LINKS.length - 2 ? ui.and : '.'}
           </span>
         ))}
       </p>

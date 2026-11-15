@@ -63,3 +63,10 @@ tr.on td{background:#17203a}
 a{color:#8fb4ff}
 .zh{margin:12px 0 6px;font-size:16px;font-weight:600}
 .nn{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;color:#0d1019;font-weight:600;font-size:12px;margin-right:7px;flex:none}
+
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.top h1{flex:1;min-width:0}
+.lang{display:inline-flex;flex:none;margin-top:6px;border:1px solid var(--ln);border-radius:10px;overflow:hidden}
+.lang button{border:0;border-radius:0;padding:6px 12px;font-size:13px;color:var(--mu);background:#161d30}
+.lang button+button{border-left:1px solid var(--ln)}
+.lang button[aria-pressed=true]{background:var(--sun);color:#0d1019}

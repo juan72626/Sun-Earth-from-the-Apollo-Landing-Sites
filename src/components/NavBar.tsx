@@ -1,10 +1,11 @@
-import { NAV_ITEMS } from '../data/content';
+import { useI18n } from '../i18n/useI18n';
 
 /** Barra de botones que salta a cada sección. */
 export default function NavBar() {
+  const { data } = useI18n();
   return (
     <div className="nv">
-      {NAV_ITEMS.map(([id, label]) => (
+      {data.NAV_ITEMS.map(([id, label]) => (
         <button key={id} onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
           {label}
         </button>

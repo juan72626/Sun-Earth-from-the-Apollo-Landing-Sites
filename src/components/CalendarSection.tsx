@@ -2,20 +2,17 @@ import { useEffect, useRef, useState, type ChangeEvent, type PointerEvent as Rea
 import { monthRow } from '../lib/astro';
 import { drawHeatmap, HM } from '../lib/draw/drawHeatmap';
 import { useSim } from '../hooks/SimContext';
+import { useI18n } from '../i18n/useI18n';
 import type { HeatMode, MonthRow } from '../types';
-
-const MODES: string[] = [
-  'horas con Sol y Tierra a la vez',
-  'horas con Sol',
-  'horas con la Tierra',
-];
 
 /** Calendario de 12 meses para el sitio elegido: horas por día con Sol y/o Tierra. */
 export default function CalendarSection() {
   const { sites, foc, t, mk, goTo } = useSim();
+  const { ui, lang, siteName } = useI18n();
   const [mode, setMode] = useState<HeatMode>(0);
   const [data, setData] = useState<{ D: MonthRow[]; n: string } | null>(null);
-  const [info, setInfo] = useState('Toca Calcular para ver el calendario del sitio elegido.');
+  /** Cálculo en curso (se guarda el sitio y el avance, no el texto, para poder traducirlo). */
+  const [busy, setBusy] = useState<{ n: string; p?: number } | null>(null);
   const ref = useRef<HTMLCanvasElement>(null);
   const job = useRef(0);
 
@@ -26,15 +23,16 @@ export default function CalendarSection() {
     const m0 = d0.getUTCMonth();
     const id = ++job.current;
     const D: MonthRow[] = [];
-    setInfo('Calculando… (' + s.n + ')');
+    setBusy({ n: s.n });
 
     const step = () => {
       if (id !== job.current) return; // se pidió otro cálculo
       D.push(monthRow(s, y, m0, D.length, mk));
       if (D.length < 12) {
-        setInfo('Calculando… ' + Math.round((D.length / 12) * 100) + ' % (' + s.n + ')');
+        setBusy({ n: s.n, p: Math.round((D.length / 12) * 100) });
         setTimeout(step, 0);
       } else {
+        setBusy(null);
         setData({ D, n: s.n });
       }
     };
@@ -43,9 +41,14 @@ export default function CalendarSection() {
 
   useEffect(() => {
     if (!data || !ref.current) return;
-    drawHeatmap(ref.current, data.D, mode, t);
-    setInfo(`${data.n}: ${MODES[mode]} de cada día (oscuro 0 h, claro 24 h). El recuadro blanco es la fecha elegida. Toca una casilla para ir a ese día.`);
-  }, [data, mode, t]);
+    drawHeatmap(ref.current, data.D, mode, t, lang);
+  }, [data, mode, t, lang]);
+
+  const info = busy
+    ? ui.calendar.calculating(siteName(busy.n), busy.p)
+    : data
+      ? ui.calendar.legend(siteName(data.n), ui.calendar.modeText[mode])
+      : ui.calendar.hint;
 
   const onUp = (ev: ReactPointerEvent<HTMLCanvasElement>): void => {
     if (!data) return;
@@ -61,20 +64,16 @@ export default function CalendarSection() {
 
   return (
     <section id="s9">
-      <h2>Calendario de 12 meses</h2>
-      <p className="note" style={{ margin: '0 0 10px' }}>
-        Cada casilla es un día: más clara significa más horas con Sol y Tierra a la vez. Se calcula para el sitio elegido arriba, desde el mes de la fecha elegida. Muestra las estaciones del polo y cuánto cambia el resultado al mover la fecha unos días.
-      </p>
+      <h2>{ui.calendar.title}</h2>
+      <p className="note" style={{ margin: '0 0 10px' }}>{ui.calendar.intro}</p>
       <div className="row">
         <label>
-          Mostrar
+          {ui.calendar.show}
           <select value={mode} onChange={(e: ChangeEvent<HTMLSelectElement>) => setMode(+e.target.value as HeatMode)}>
-            <option value="0">Sol y Tierra a la vez</option>
-            <option value="1">Solo Sol</option>
-            <option value="2">Solo Tierra</option>
+            {ui.calendar.modeOptions.map((label, i) => <option key={i} value={i}>{label}</option>)}
           </select>
         </label>
-        <button onClick={calc}>Calcular</button>
+        <button onClick={calc}>{ui.calendar.calc}</button>
       </div>
       <canvas ref={ref} id="hc" width={HM.W} height={HM.H} onPointerUp={onUp} />
       <p className="note">{info}</p>

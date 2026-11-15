@@ -1,12 +1,14 @@
 import { DAY } from '../astro';
 import { ctx2d } from '../canvas';
+import { localeOf } from '../format';
+import type { Lang } from '../../i18n/types';
 import type { HeatMode, MonthRow } from '../../types';
 
 const W0 = 720, H0 = 460, L0 = 70, T0 = 34;
 export const HM = { W: W0, H: H0, L: L0, T: T0, cw: (W0 - L0 - 10) / 31, ch: (H0 - T0 - 10) / 12 };
 
 /** Calendario de 12 meses: cada casilla es un día; más claro = más horas. mode: 0 ambos, 1 Sol, 2 Tierra. */
-export function drawHeatmap(canvas: HTMLCanvasElement, data: MonthRow[], mode: HeatMode, t: number): void {
+export function drawHeatmap(canvas: HTMLCanvasElement, data: MonthRow[], mode: HeatMode, t: number, lang: Lang = 'es'): void {
   const g = ctx2d(canvas);
   const { W, H, L, T, cw, ch } = HM;
   g.fillStyle = '#0b1020'; g.fillRect(0, 0, W, H);
@@ -16,7 +18,7 @@ export function drawHeatmap(canvas: HTMLCanvasElement, data: MonthRow[], mode: H
   data.forEach((r, i) => {
     g.textAlign = 'right'; g.fillStyle = '#98a2bd';
     g.fillText(
-      new Date(r.st).toLocaleDateString('es', { month: 'short', year: '2-digit', timeZone: 'UTC' }),
+      new Date(r.st).toLocaleDateString(localeOf(lang), { month: 'short', year: '2-digit', timeZone: 'UTC' }),
       L - 8, T + (i + 0.62) * ch,
     );
     r.row.forEach((v, j) => {

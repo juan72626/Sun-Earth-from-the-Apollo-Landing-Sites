@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import { drawPolar, layoutPolar, poleSummary, POLAR_W } from '../lib/draw/drawPolar';
 import { passesFilter, ptCol, isCand } from '../lib/classify';
-import { f1 } from '../lib/format';
 import { useSim } from '../hooks/SimContext';
+import { useI18n } from '../i18n/useI18n';
 
 const RADII: number[] = [2, 5, 10];
 
@@ -10,13 +10,16 @@ const RADII: number[] = [2, 5, 10];
 export default function PolarMapSection() {
   const { sites, foc, e, mk, filter, openSite } = useSim();
   const [S, setS] = useState(10);
+  const { ui, lang, fmt, siteName } = useI18n();
+  const { f1 } = fmt;
   const ref = useRef<HTMLCanvasElement>(null);
 
   const pts = useMemo(() => layoutPolar(sites, S, (s) => passesFilter(s, filter)), [sites, S, filter]);
 
   useEffect(() => {
-    if (ref.current) drawPolar(ref.current, { e, mk, S, foc, pts, sites });
-  }, [e, mk, S, foc, pts, sites]);
+    if (ref.current) drawPolar(ref.current, { e, mk, S, foc, pts, sites, lang, name: (s) => siteName(s) });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [e, mk, S, foc, pts, sites, lang]);
 
   const onUp = (ev: ReactPointerEvent<HTMLCanvasElement>): void => {
     const r = ev.currentTarget.getBoundingClientRect();
@@ -34,30 +37,26 @@ export default function PolarMapSection() {
 
   return (
     <section id="s2">
-      <h2>Mapa del polo sur</h2>
+      <h2>{ui.polar.title}</h2>
       <div className="pz">
         {RADII.map((r) => (
-          <button key={r} className={r === S ? 'on' : ''} onClick={() => setS(r)}>Radio {r}°</button>
+          <button key={r} className={r === S ? 'on' : ''} onClick={() => setS(r)}>{ui.polar.radius(r)}</button>
         ))}
       </div>
       <canvas ref={ref} id="pm" width={POLAR_W} height={POLAR_W} onPointerUp={onUp} />
-      <p className="note">
-        En el polo: el Sol está {f1(Math.abs(xs))}° {xs > 0 ? 'sobre' : 'bajo'} el horizonte y la Tierra {f1(Math.abs(xe))}° {xe > 0 ? 'sobre' : 'bajo'} el horizonte.
-      </p>
+      <p className="note">{ui.polar.atPole(f1(Math.abs(xs)), xs > 0, f1(Math.abs(xe)), xe > 0)}</p>
       <div id="pml">
         {pts.map((p, n) => {
           const s = sites[p.i];
           return (
             <div key={p.i} onClick={() => openSite(p.i)}>
               <span className="nn" style={{ background: ptCol(s) }}>{n + 1}</span>
-              {s.n}{isCand(s) ? ', candidato' : ''}
+              {siteName(s)}{isCand(s) ? ui.polar.candidateSuffix : ''}
             </div>
           );
         })}
       </div>
-      <p className="note">
-        Cómo leerlo: el mapa se ve desde arriba del polo sur, con el 0° hacia la Tierra y el este a la derecha. El lado amarillo es de donde llega la luz del Sol y el oscuro es la sombra. Cada número es un sitio de la lista de arriba; si dos quedan muy juntos se separan un poco y una línea fina marca su lugar real. Colores: verde seguro, amarillo precaución, rojo peligro o no seguro, morado candidato (los mismos que en el globo y la tabla). La línea punteada violeta es el límite de 6° de latitud que pidió NASA para Artemis. Con los botones de radio acercas el polo.
-      </p>
+      <p className="note">{ui.polar.howTo}</p>
     </section>
   );
 }

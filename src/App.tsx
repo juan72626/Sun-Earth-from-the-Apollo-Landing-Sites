@@ -1,6 +1,6 @@
 import { SimContext } from './hooks/SimContext';
 import { useSimulation } from './hooks/useSimulation';
-import { FOOTER_NOTE } from './data/content';
+import { useI18n } from './i18n/useI18n';
 
 import Header from './components/Header';
 import TimeControls from './components/TimeControls';
@@ -18,6 +18,7 @@ import InfoSheet from './components/InfoSheet';
 
 export default function App() {
   const sim = useSimulation();
+  const { data } = useI18n();
 
   return (
     <SimContext.Provider value={sim}>
@@ -35,7 +36,7 @@ export default function App() {
         <ResearchSection />
         <SourcesSection />
         <InfoSheet />
-        <p className="note">{FOOTER_NOTE}</p>
+        <p className="note">{data.FOOTER_NOTE}</p>
       </main>
     </SimContext.Provider>
   );

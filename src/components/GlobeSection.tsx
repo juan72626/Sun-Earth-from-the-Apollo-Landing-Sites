@@ -4,6 +4,7 @@ import { SAT } from '../data/satellites';
 import { satIcon } from '../lib/draw/satIcon';
 import { ptCol, passesFilter } from '../lib/classify';
 import { useSim } from '../hooks/SimContext';
+import { useI18n } from '../i18n/useI18n';
 
 function scrollGlobeIntoView(canvas: HTMLCanvasElement): void {
   const b = canvas.getBoundingClientRect();
@@ -13,6 +14,7 @@ function scrollGlobeIntoView(canvas: HTMLCanvasElement): void {
 /** Globo lunar 3D con puntos de sitios, Sol, Tierra y satélites. */
 export default function GlobeSection() {
   const { sites, foc, e, t, filter, sheet, globeNonce, openSite, openSat } = useSim();
+  const { ui } = useI18n();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const sunLabel = useRef<HTMLSpanElement>(null);
   const earthLabel = useRef<HTMLSpanElement>(null);
@@ -75,18 +77,18 @@ export default function GlobeSection() {
 
   return (
     <section id="s1">
-      <h2>Globo lunar</h2>
+      <h2>{ui.globe.title}</h2>
       <div id="glw">
         <canvas ref={canvasRef} id="gl" width="600" height="600" style={failed ? { display: 'none' } : undefined} />
-        <span ref={sunLabel} className="gt" style={{ color: '#ffc94d', display: 'none' }}>Sol</span>
-        <span ref={earthLabel} className="gt" style={{ color: '#6fb7ff', display: 'none' }}>Tierra</span>
+        <span ref={sunLabel} className="gt" style={{ color: '#ffc94d', display: 'none' }}>{ui.globe.sun}</span>
+        <span ref={earthLabel} className="gt" style={{ color: '#6fb7ff', display: 'none' }}>{ui.globe.earth}</span>
       </div>
       <div className="btns">
-        <button onClick={() => globeRef.current?.setView('earth')}>Ver desde la Tierra</button>
-        <button onClick={() => globeRef.current?.setView('site')}>Ver el sitio elegido</button>
-        <button onClick={() => globeRef.current?.zoomIn()}>Acercar</button>
-        <button onClick={() => globeRef.current?.zoomOut()}>Alejar</button>
-        <button onClick={toggleSats}>Satélites: {satOn ? 'sí' : 'no'}</button>
+        <button onClick={() => globeRef.current?.setView('earth')}>{ui.globe.fromEarth}</button>
+        <button onClick={() => globeRef.current?.setView('site')}>{ui.globe.chosenSite}</button>
+        <button onClick={() => globeRef.current?.zoomIn()}>{ui.globe.zoomIn}</button>
+        <button onClick={() => globeRef.current?.zoomOut()}>{ui.globe.zoomOut}</button>
+        <button onClick={toggleSats}>{ui.globe.satellites(satOn)}</button>
       </div>
       <div className="btns">
         {SAT.map((s, i) => (
@@ -100,9 +102,7 @@ export default function GlobeSection() {
           </button>
         ))}
       </div>
-      <p className="note">
-        La luz y la sombra siguen la posición real del Sol. Colores de los puntos (los mismos en el globo, el mapa, la tabla y la ficha): verde = seguro, amarillo = precaución, rojo = peligro o no seguro, morado = candidato. Al tocar un sitio el globo se acerca a él; con Acercar y Alejar ajustas el zoom. Los satélites (cada uno con su ilustración y su órbita) están a una escala comprimida y sus órbitas son ilustrativas: toca uno, o su botón, para ver su nombre y en qué aportó. Arrastra para girar y toca un punto para ver su ficha: cuándo se visitó, quiénes fueron y por qué es seguro, riesgoso o candidato. Fuera de la vista desde la Tierra aparecen el Sol (esfera dorada con rayos, más lejos) y la Tierra (esfera azul con océanos y continentes, más cerca), cada uno con su nombre y una línea que apunta hacia él. La Tierra se ve con fase porque la ilumina el Sol, y gira con el paso del tiempo.
-      </p>
+      <p className="note">{ui.globe.note}</p>
     </section>
   );
 }

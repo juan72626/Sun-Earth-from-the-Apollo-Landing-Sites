@@ -1,5 +1,7 @@
 import { RAD } from '../astro';
 import { ctx2d } from '../canvas';
+import { UI } from '../../i18n/ui';
+import type { Lang } from '../../i18n/types';
 
 function lander(g: CanvasRenderingContext2D, x: number, y: number, ang: number, s: number): void {
   g.save(); g.translate(x, y); g.rotate(ang); g.scale(s, s);
@@ -18,7 +20,8 @@ function lander(g: CanvasRenderingContext2D, x: number, y: number, ang: number, 
 }
 
 /** Dibujo animado: módulo bajando a una zona apta (bad=false) o peligrosa (bad=true). ph ∈ [0,1). */
-export function zoneScene(canvas: HTMLCanvasElement, bad: boolean, ph: number): void {
+export function zoneScene(canvas: HTMLCanvasElement, bad: boolean, ph: number, lang: Lang = 'es'): void {
+  const cv = UI[lang].canvas;
   const g = ctx2d(canvas);
   const W = canvas.width, H = canvas.height;
   const gy = H * 0.74, tn = Math.tan(25 * RAD);
@@ -41,7 +44,7 @@ export function zoneScene(canvas: HTMLCanvasElement, bad: boolean, ph: number): 
   if (!bad) {
     g.fillStyle = '#4aa3ff';
     g.beginPath(); g.arc(W * 0.86, H * 0.2, 16, 0, 7); g.fill();
-    g.fillStyle = '#eef1fb'; g.fillText('Tierra a la vista', W * 0.86, H * 0.2 + 40);
+    g.fillStyle = '#eef1fb'; g.fillText(cv.earthInView, W * 0.86, H * 0.2 + 40);
   }
 
   const gr = g.createLinearGradient(0, gy - 120, 0, H);
@@ -90,15 +93,15 @@ export function zoneScene(canvas: HTMLCanvasElement, bad: boolean, ph: number): 
   g.beginPath(); g.moveTo(ax, ay); g.lineTo(ax + L * Math.cos(th * RAD), ay - L * Math.sin(th * RAD)); g.stroke();
   g.beginPath(); g.arc(ax, ay, 46, -th * RAD, 0); g.stroke();
   g.textAlign = 'left'; g.fillStyle = col; g.font = 'bold 22px Jost,sans-serif';
-  g.fillText('Pendiente de unos ' + th + '°', ax + L + 14, ay - 6);
+  g.fillText(cv.slope(th), ax + L + 14, ay - 6);
   g.textAlign = 'center'; g.font = 'bold 24px Jost,sans-serif';
-  g.fillText(bad ? 'Zona peligrosa' : 'Zona apta', W * 0.5, 34);
+  g.fillText(bad ? cv.zoneBad : cv.zoneOk, W * 0.5, 34);
   g.font = '20px Jost,sans-serif'; g.fillStyle = '#c9d1e8';
   g.fillText(
     bad
-      ? 'Sol casi rasante y sombras largas; el relieve tapa la Tierra'
-      : 'Terreno casi plano, pocas rocas pequeñas, Sol alto y Tierra visible',
+      ? cv.zoneBadDesc
+      : cv.zoneOkDesc,
     W * 0.5, 62,
   );
-  if (bad) { g.fillStyle = '#98a2bd'; g.fillText('Sin enlace con la Tierra', W * 0.82, H * 0.2); }
+  if (bad) { g.fillStyle = '#98a2bd'; g.fillText(cv.noLink, W * 0.82, H * 0.2); }
 }

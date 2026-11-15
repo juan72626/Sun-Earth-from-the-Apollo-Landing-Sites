@@ -1,9 +1,12 @@
 import { el, az } from '../astro';
 import { ctx2d } from '../canvas';
+import { UI } from '../../i18n/ui';
+import type { Lang } from '../../i18n/types';
 import type { BodyKey, Ephemeris, Site, Vec3 } from '../../types';
 
 /** Vista del horizonte: azimut en horizontal, elevación en vertical. */
-export function drawSky(canvas: HTMLCanvasElement, s: Site, e: Ephemeris, mk: number): void {
+export function drawSky(canvas: HTMLCanvasElement, s: Site, e: Ephemeris, mk: number, lang: Lang = 'es'): void {
+  const cv = UI[lang].canvas;
   const g = ctx2d(canvas);
   const W = canvas.width, H = canvas.height;
   const xs = el(s, e.s), xe = el(s, e.e);
@@ -25,7 +28,8 @@ export function drawSky(canvas: HTMLCanvasElement, s: Site, e: Ephemeris, mk: nu
   }
 
   g.font = '22px Jost,sans-serif'; g.textAlign = 'center'; g.fillStyle = '#98a2bd';
-  const cardinals: [string, number][] = [['N', 14], ['E', W / 4], ['S', W / 2], ['O', W * 0.75], ['N', W - 14]];
+  const [cN, cE, cS, cW] = cv.cardinals;
+  const cardinals: [string, number][] = [[cN, 14], [cE, W / 4], [cS, W / 2], [cW, W * 0.75], [cN, W - 14]];
   cardinals.forEach(([l, x]) => g.fillText(l, x, H - 8));
 
   const bodies: [Vec3, BodyKey][] = [[e.s, 's'], [e.e, 'e']];
@@ -44,7 +48,7 @@ export function drawSky(canvas: HTMLCanvasElement, s: Site, e: Ephemeris, mk: nu
     }
     g.beginPath(); g.arc(x, y, k === 's' ? 13 : 11, 0, 7); g.fill();
     g.shadowBlur = 0; g.fillStyle = '#eef1fb';
-    g.fillText(k === 's' ? 'Sol' : 'Tierra', x, y - 20);
+    g.fillText(k === 's' ? cv.sun : cv.earth, x, y - 20);
     g.globalAlpha = 1;
   });
 }

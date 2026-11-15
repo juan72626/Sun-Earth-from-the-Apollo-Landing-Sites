@@ -1,5 +1,7 @@
 import { el, eph, HR, DAY } from '../astro';
 import { ctx2d } from '../canvas';
+import { fdate } from '../format';
+import type { Lang } from '../../i18n/types';
 import type { EclipseEvent, Site } from '../../types';
 
 /**
@@ -10,6 +12,7 @@ export function drawTimeline(
   canvas: HTMLCanvasElement,
   s: Site,
   { t, w0, mk, eclipses }: { t: number; w0: number; mk: number; eclipses: EclipseEvent[] | null },
+  lang: Lang = 'es',
 ): void {
   const g = ctx2d(canvas);
   const W = canvas.width, H = canvas.height;
@@ -56,7 +59,7 @@ export function drawTimeline(
   for (let k = 0; k < 6; k++) {
     g.textAlign = k ? 'center' : 'left';
     g.fillText(
-      new Date(w0 + k * 5 * DAY).toLocaleDateString('es', { day: 'numeric', month: 'short', timeZone: 'UTC' }),
+      fdate(w0 + k * 5 * DAY, lang),
       k ? ((k * 5 * DAY) / (n * HR)) * W : 6,
       H - B - 8,
     );

@@ -1,4 +1,6 @@
-import { I, LV, LVC } from '../data/siteInfo';
+import { I, LVC } from '../data/siteInfo';
+import { DATA } from '../i18n/data';
+import type { Lang } from '../i18n/types';
 import type { Site, SiteInfo, SiteLevel } from '../types';
 
 const info = (s: Site): SiteInfo | undefined => I[s.n];
@@ -8,8 +10,8 @@ export const OKS = (s: Site): SiteLevel => info(s)?.[0] ?? 'na';
 export const ptCol0 = (s: Site): string => LVC[OKS(s)];
 export const isCand = (s: Site): boolean => !!info(s)?.[1];
 export const ptCol = (s: Site): string => (isCand(s) ? '#b48cff' : ptCol0(s));
-export const lvName = (s: Site): string => LV[OKS(s)][0];
-export const catName = (s: Site): string => (isCand(s) ? 'Candidato' : lvName(s));
+export const lvName = (s: Site, lang: Lang = 'es'): string => DATA[lang].LV[OKS(s)][0];
+export const catName = (s: Site, lang: Lang = 'es', candidate = 'Candidato'): string => (isCand(s) ? candidate : lvName(s, lang));
 
 /** Filtro "Mostrar" de la tabla, el mapa y el globo. */
 export const passesFilter = (s: Site, m: number): boolean =>
